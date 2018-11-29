@@ -22,3 +22,10 @@ services:
       PGUSER: docker
       PGPASSWORD: docker
       PGDATABASE: training
+
+  client:
+    build: ./client
+    ports:
+      - 3000:3000
+    volumes:
+      - ./client:/app

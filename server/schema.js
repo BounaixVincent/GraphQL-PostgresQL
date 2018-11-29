@@ -1,5 +1,5 @@
 const graphql = require('graphql');
-const connectionString = 'postgresql://verne:Verne@localhost:5432/training';
+const connectionString = 'postgresql://verne:Verne@localhost:5432/vacations';
 const pgp = require('pg-promise')();
 const db = {}
 db.conn = pgp(connectionString);
@@ -9,7 +9,7 @@ const {
    GraphQLString,
    GraphQLBoolean,
    GraphQLList,
-   GraphQLSchema
+   GraphQLSchema,
 } = graphql;
 const PersonType = new GraphQLObjectType({
    name: 'Person',
@@ -30,7 +30,21 @@ const PersonType = new GraphQLObjectType({
                   return 'The error is', err;
                });
          }
-      }
+      },
+      vacations: {
+        type: new GraphQLList(VacationType),
+        resolve(parentValue, args) {
+           const query = `SELECT * FROM "vacations" WHERE
+           person=${parentValue.id}`;
+           return db.conn.many(query)
+              .then(data => {
+                 return data;
+              })
+              .catch(err => {
+                 return 'The error is', err;
+              });
+        }
+     }
    })
 })
 const EmailType = new GraphQLObjectType({
@@ -41,6 +55,15 @@ const EmailType = new GraphQLObjectType({
       primary: { type: GraphQLBoolean }
    }
 })
+
+const VacationType = new GraphQLObjectType({
+    name: 'Vacation',
+    fields: {
+       id: { type: GraphQLID },
+       balance: { type: GraphQLString }
+    }
+ })
+
 const RootQuery = new GraphQLObjectType({
    name: 'RootQueryType',
    fields: {
@@ -72,7 +95,22 @@ const RootQuery = new GraphQLObjectType({
             });
         }
       }
-   }
+   },
+   vacations: {
+    type: VacationType,
+    args: { id: { type: GraphQLID } },
+    resolve(parentValue, args) {
+       const query = `SELECT * FROM "vacations" WHERE id=${args.id}`;
+       return db.conn.one(query)
+          .then(data => {
+             return data;
+          })
+          .catch(err => {
+             return 'The error is', err;
+          });
+      }
+    }
+   
 })
 module.exports = new GraphQLSchema({
    query: RootQuery
