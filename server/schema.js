@@ -1,5 +1,5 @@
 const graphql = require('graphql');
-const connectionString = 'postgresql://verne:Verne@localhost:5432/vacations';
+const connectionString = 'postgresql://bounaixvincent:bounaixvincent@localhost:5432/vacations';
 const pgp = require('pg-promise')();
 const db = {}
 db.conn = pgp(connectionString);
@@ -68,24 +68,38 @@ const RootQuery = new GraphQLObjectType({
    name: 'RootQueryType',
    fields: {
       person: {
-      type: PersonType,
+         type: PersonType,
+         args: { id: { type: GraphQLID } },
+         resolve(parentValue, args) {
+            const query = `SELECT * FROM "people" WHERE id=${args.id}`;
+            return db.conn.one(query)
+               .then(data => {
+                  return data;
+               })
+               .catch(err => {
+                  return 'The error is', err;
+               });
+         }
+      },
+      emails: {
+         type: EmailType,
+         args: { id: { type: GraphQLID } },
+         resolve(parentValue, args) {
+            const query = `SELECT * FROM "emails" WHERE id=${args.id}`;
+            return db.conn.one(query)
+               .then(data => {
+                  return data;
+               })
+               .catch(err => {
+                  return 'The error is', err;
+               });
+         }        
+      },
+      vacations: {
+      type: VacationType,
       args: { id: { type: GraphQLID } },
       resolve(parentValue, args) {
-         const query = `SELECT * FROM "people" WHERE id=${args.id}`;
-         return db.conn.one(query)
-            .then(data => {
-               return data;
-            })
-            .catch(err => {
-                return 'The error is', err;
-            });
-      }
-   },
-   emails: {
-      type: EmailType,
-      args: { id: { type: GraphQLID } },
-      resolve(parentValue, args) {
-         const query = `SELECT * FROM "emails" WHERE id=${args.id}`;
+         const query = `SELECT * FROM "vacations" WHERE id=${args.id}`;
          return db.conn.one(query)
             .then(data => {
                return data;
@@ -93,24 +107,9 @@ const RootQuery = new GraphQLObjectType({
             .catch(err => {
                return 'The error is', err;
             });
-        }
+         }
       }
-   },
-   vacations: {
-    type: VacationType,
-    args: { id: { type: GraphQLID } },
-    resolve(parentValue, args) {
-       const query = `SELECT * FROM "vacations" WHERE id=${args.id}`;
-       return db.conn.one(query)
-          .then(data => {
-             return data;
-          })
-          .catch(err => {
-             return 'The error is', err;
-          });
-      }
-    }
-   
+   }
 })
 module.exports = new GraphQLSchema({
    query: RootQuery
